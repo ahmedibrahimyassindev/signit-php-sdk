@@ -1,6 +1,6 @@
 # Signit PHP SDK
 
-A standalone, framework-independent PHP client for the Signit v1 e-signature API. It handles OAuth client credentials, document upload, embedded signature requests, request status, signatory lookup, signing links, and sealed document URLs. Booking models, PDF generation, persistence, and business rules remain the responsibility of the integrating application.
+A framework-independent PHP client for the Signit v1 e-signature API, with optional Laravel integration. It supports OAuth client credentials, document upload, embedded signature requests, request status, signatory lookup, signing links, and sealed document URLs.
 
 ## Requirements
 
@@ -9,15 +9,53 @@ A standalone, framework-independent PHP client for the Signit v1 e-signature API
 
 ## Install
 
-Once published to Packagist:
+After the package is available on Packagist, install it with Composer:
 
 ```sh
 composer require ahmedibrahimyassindev/signit-php-sdk
 ```
 
-For local development in this repository, add a Composer path repository pointing to `packages/signit-php-sdk` and require `ahmedibrahimyassindev/signit-php-sdk`.
+The package can also be installed directly from its Git repository before its first Packagist release:
 
-## Usage
+```sh
+composer config repositories.signit vcs https://github.com/ahmedibrahimyassindev/signit-php-sdk
+composer require ahmedibrahimyassindev/signit-php-sdk:dev-main
+```
+
+## Laravel setup
+
+Laravel discovers and registers the service provider automatically. Publish the configuration file:
+
+```sh
+php artisan vendor:publish --tag=signit-config
+```
+
+Set the credentials and API URL in your Laravel application's `.env` file:
+
+```dotenv
+SIGN_IT_CLIENT_ID=your-client-id
+SIGN_IT_CLIENT_SECRET=your-client-secret
+SIGN_IT_BASE_URL=https://your-signit-api-base-url
+SIGN_IT_TIMEOUT=30
+```
+
+The published `config/signit.php` maps these environment values to the SDK client. Keep credentials in your deployment environment and out of source control. Resolve the client through Laravel's container:
+
+```php
+use Signit\SignitClient;
+
+class ContractController
+{
+    public function create(SignitClient $signit)
+    {
+        // Use the configured Signit client.
+    }
+}
+```
+
+## Plain PHP usage
+
+The SDK does not load environment variables or framework configuration by itself. Read configuration through your application's preferred mechanism and pass the values to the client:
 
 ```php
 use Signit\SignitClient;
@@ -26,12 +64,13 @@ $signit = new SignitClient(
     getenv('SIGN_IT_CLIENT_ID'),
     getenv('SIGN_IT_CLIENT_SECRET'),
     getenv('SIGN_IT_BASE_URL'),
-    getenv('SIGN_IT_CLIENT_ID') // appended to embedded signing links as client_id
+    getenv('SIGN_IT_CLIENT_ID'), // Optional client_id query parameter for signing links.
+    30 // Request timeout in seconds.
 );
 
-$documentName = $signit->uploadDocument($pdfPath, 'booking.pdf');
+$documentName = $signit->uploadDocument($pdfPath, 'contract.pdf');
 $request = $signit->createEmbeddedSignatureRequest($documentName, [
-    'title' => 'Booking agreement',
+    'title' => 'Contract',
     'is_embedded' => true,
     'signatories' => [[
         'full_name' => 'Example Signer',
@@ -50,15 +89,8 @@ $request = $signit->createEmbeddedSignatureRequest($documentName, [
 $requestId = $request['id'];
 $signatoryId = $signit->getSignatoryId($requestId);
 $signingUrl = $signit->getSigningUrl($requestId, $signatoryId);
-
-// Later: $signit->getSignatureStatus($requestId);
-// Later: $sealedFileUrl = $signit->getSealedFileUrl($requestId);
+$status = $signit->getSignatureStatus($requestId);
+$sealedFileUrl = $signit->getSealedFileUrl($requestId);
 ```
 
-Set the API base URL and credentials from environment-specific configuration. The SDK does not read environment variables itself, depend on Yii, or log request bodies and credentials.
-
-## YaSchools booking flow
-
-`DirectBookingController::actionRequireSign` validates the active booking and signing eligibility, reuses an existing request when possible, otherwise delegates request creation to the booking model's `createSignItRequest()`, then renders the embedded signing URL. `common/helpers/SignItHelper.php` owns the Yii-specific PDF, booking, signature-record, and notification workflow. This SDK packages the reusable Signit HTTP/OAuth operations called by that workflow; it intentionally has no dependency on Yii or school booking models.
-
-API errors throw `Signit\Exceptions\SignitException`, which exposes `getHttpStatus()` and `getResponseBody()`. Access tokens are cached in the client instance until shortly before expiry.
+The client caches its OAuth access token in memory until shortly before it expires. API errors throw `Signit\Exceptions\SignitException`, which provides `getHttpStatus()` and `getResponseBody()`.

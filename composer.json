@@ -1,6 +1,6 @@
 {
     "name": "ahmedibrahimyassindev/signit-php-sdk",
-    "description": "Standalone PHP SDK for Signit embedded e-signature API",
+    "description": "Framework-independent PHP SDK for the Signit e-signature API with Laravel integration",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -14,5 +14,34 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "homepage": "https://github.com/ahmedibrahimyassindev/signit-php-sdk",
+    "authors": [
+        {
+            "name": "Ahmed Ibrahim Yassin",
+            "role": "Developer"
+        }
+    ],
+    "keywords": [
+        "signit",
+        "e-signature",
+        "electronic-signature",
+        "signature",
+        "sdk",
+        "laravel",
+        "php"
+    ],
+    "suggest": {
+        "illuminate/support": "Install Laravel to use the auto-discovered service provider and configuration."
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Signit\\Laravel\\SignitServiceProvider"
+            ]
+        }
+    },
+    "support": {
+        "source": "https://github.com/ahmedibrahimyassindev/signit-php-sdk"
+    }
 }
