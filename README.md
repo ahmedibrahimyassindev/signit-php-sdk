@@ -4,7 +4,7 @@ A framework-independent PHP client for the Signit v1 e-signature API, with optio
 
 ## Requirements
 
-- PHP 7.1 or later
+- PHP 8.5.12 or later
 - ext-curl and ext-json
 
 ## Install
